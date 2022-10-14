@@ -1,0 +1,23 @@
+FROM mcr.microsoft.com/dotnet/aspnet:3.1 AS base
+WORKDIR /app
+EXPOSE 80
+
+FROM mcr.microsoft.com/dotnet/sdk:3.1 AS build
+WORKDIR /src
+COPY ["Code/technical-task-app-designer.Api/technical-task-app-designer.Api.csproj", "Code/technical-task-app-designer.Api/"]
+COPY ["Code/technical-task-app-designer.Business/technical-task-app-designer.Business.csproj", "Code/technical-task-app-designer.Business/"]
+COPY ["Code/technical-task-app-designer.Data/technical-task-app-designer.Data.csproj", "Code/technical-task-app-designer.Data/"]
+COPY ["Code/technical-task-app-designer.Entities/technical-task-app-designer.Entities.csproj", "Code/technical-task-app-designer.Entities/"]
+COPY ["Code/technical-task-app-designer.Test.Api/technical-task-app-designer.Test.Api.csproj", "Code/technical-task-app-designer.Test.Api/"]
+COPY ["Code/technical-task-app-designer.Test.Business/technical-task-app-designer.Test.Business.csproj", "Code/technical-task-app-designer.Test.Business/"]
+RUN dotnet restore "Code/technical-task-app-designer.Api/technical-task-app-designer.Api.csproj"
+COPY . .
+WORKDIR "/src/Code/technical-task-app-designer.Api"
+RUN dotnet build "technical-task-app-designer.Api.csproj" -c Release -o /app/build
+
+FROM build AS publish
+RUN dotnet publish "technical-task-app-designer.Api.csproj" -c Release -o /app/publish
+
+WORKDIR /src
+RUN dotnet test --results-directory /testresults --logger "trx;LogFileName=testresults.Api.trx" /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura /p:CoverletOutput=/testresults/coverage/ /p:MergeWith=/testresults/coverage/coverage.json "Code/technical-task-app-designer.Test.Api/technical-task-app-designer.Test.Api.csproj"
+RUN dotnet test --results-directory /testresults --logger "trx;LogFileName=testresults.Api.trx" /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura /p:CoverletOutput=/testresults/coverage/ /p:MergeWith=/testresults/coverage/coverage.json "Code/technical-task-app-designer.Test.Business/technical-task-app-designer.Test.Business.csproj"
