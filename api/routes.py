@@ -1,3 +1,4 @@
+from api import employeeapi
 from fastapi import FastAPI
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -16,3 +17,4 @@ app.add_middleware(
 )
 app.add_middleware(LoggingMiddleware)
 
+app.include_router(employeeapi.router, tags=["employee"])
